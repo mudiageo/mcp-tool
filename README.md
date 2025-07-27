@@ -10,6 +10,8 @@ A comprehensive CLI tool called `mcp-generate` that converts various documentati
 - **Three Core MCP Tools**: search_content, get_content, and list_resources
 - **Configuration File Support**: JSON configuration for batch processing
 - **CLI Interface**: Complete command-line interface with comprehensive options
+- **Direct Server Execution**: Run MCP servers directly without generating files (--run mode)
+- **Modern Build Tools**: Uses tsdown for fast TypeScript compilation and vitest for tests
 
 ## Installation
 
@@ -41,6 +43,15 @@ mcp-generate --source website --url https://threlte.xyz/docs --output ./threlte-
 mcp-generate --source github --repo facebook/react --output ./react-server --include-readme
 ```
 
+### Run Server Directly (No File Generation)
+```bash
+# Run an MCP server directly from local docs
+mcp-generate --source local --path ./docs --run
+
+# Run server from website documentation
+mcp-generate --source website --url https://threlte.xyz/docs --run
+```
+
 ### Use Configuration File
 ```bash
 mcp-generate --config ./examples/threlte-config.json
@@ -65,6 +76,7 @@ Options:
   --format <type>          Output format preferences
   --verbose                Verbose logging
   --dry-run               Preview without generation
+  --run                   Create and run the server directly without generating files
   -h, --help              Display help for command
 ```
 
@@ -176,20 +188,29 @@ See the `examples/` directory for complete configuration examples:
 
 ## Development
 
+This project uses modern tooling for development:
+
+- **tsdown**: Fast TypeScript compilation powered by rolldown
+- **vitest**: Fast unit testing framework
+- **ESLint**: Code linting and style enforcement
+
 ```bash
 # Install dependencies
 npm install
 
-# Build the project
+# Build the project (uses tsdown)
 npm run build
 
-# Run tests
-npm test
+# Run tests (uses vitest)
+npm run test:run
+
+# Run tests in watch mode
+npm run test
 
 # Lint code
 npm run lint
 
-# Development mode
+# Development mode (uses tsx)
 npm run dev
 ```
 

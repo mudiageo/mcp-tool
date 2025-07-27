@@ -30,7 +30,8 @@ program
   .option('--filter <pattern>', 'Content filtering pattern')
   .option('--format <type>', 'Output format preferences')
   .option('--verbose', 'Verbose logging', false)
-  .option('--dry-run', 'Preview without generation', false);
+  .option('--dry-run', 'Preview without generation', false)
+  .option('--run', 'Create and run the server directly without generating files', false);
 
 program.action(async (options: CLIOptions) => {
   const logger = new Logger(options.verbose);
@@ -45,8 +46,8 @@ program.action(async (options: CLIOptions) => {
       process.exit(1);
     }
 
-    if (!options.config && !options.output) {
-      logger.error('Output directory (--output) is required when not using config file');
+    if (!options.config && !options.output && !options.run) {
+      logger.error('Output directory (--output) is required when not using config file or --run mode');
       process.exit(1);
     }
 
@@ -62,7 +63,10 @@ program.action(async (options: CLIOptions) => {
     const generator = new McpGenerator(config, logger);
 
     // Generate MCP server
-    if (options.dryRun) {
+    if (options.run) {
+      logger.info(chalk.blue('🏃 Running MCP server directly...'));
+      await generator.run();
+    } else if (options.dryRun) {
       logger.info(chalk.yellow('🔍 Dry run mode - previewing generation...'));
       await generator.preview();
     } else {
@@ -92,8 +96,12 @@ async function loadConfig(configPath: string, logger: Logger): Promise<Config> {
 async function createConfigFromOptions(options: CLIOptions, logger: Logger): Promise<Config> {
   logger.info('⚙️ Creating configuration from CLI options');
   
-  if (!options.source || !options.output) {
-    throw new Error('Source type and output directory are required');
+  if (!options.source) {
+    throw new Error('Source type is required');
+  }
+
+  if (!options.output && !options.run) {
+    throw new Error('Output directory is required when not using --run mode');
   }
 
   const sourceConfig: any = {
@@ -142,7 +150,7 @@ async function createConfigFromOptions(options: CLIOptions, logger: Logger): Pro
   return {
     sources: [sourceConfig],
     output: {
-      directory: options.output,
+      directory: options.output || '/tmp/mcp-server-temp',
       template: options.template || 'typescript-standard',
       features: ['search', 'browse', 'retrieve'],
     },

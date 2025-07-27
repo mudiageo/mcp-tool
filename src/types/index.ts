@@ -107,4 +107,5 @@ export interface CLIOptions {
   format?: string;
   verbose?: boolean;
   dryRun?: boolean;
+  run?: boolean;
 }

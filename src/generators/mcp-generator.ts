@@ -4,6 +4,7 @@ import { WebsiteProcessor } from '../processors/website-processor';
 import { GitHubProcessor } from '../processors/github-processor';
 import { LocalProcessor } from '../processors/local-processor';
 import { ServerGenerator } from './server-generator';
+import { InMemoryMcpServer } from './in-memory-server';
 import ora from 'ora';
 import chalk from 'chalk';
 
@@ -102,6 +103,21 @@ export class McpGenerator {
         lastProcessed: new Date(),
       },
     };
+  }
+
+  async run(): Promise<void> {
+    this.logger.info(chalk.blue('📋 Processing sources for direct execution...'));
+    
+    const processedContent = await this.processAllSources();
+    
+    this.logger.info(chalk.blue('🏃 Starting MCP server directly...'));
+    
+    const serverName = this.config.sources.length === 1 
+      ? `${this.config.sources[0].name}-server`
+      : 'multi-source-server';
+    
+    const server = new InMemoryMcpServer(serverName, processedContent, this.logger);
+    await server.run();
   }
 
   private extractKeywords(text: string): string[] {
