@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "type": "local",
+      "name": "project-docs",
+      "path": "./docs",
+      "options": {
+        "format": "markdown",
+        "recursive": true,
+        "include": [
+          "**/*.md",
+          "**/*.txt",
+          "**/*.rst"
+        ],
+        "exclude": [
+          "node_modules/**",
+          ".git/**",
+          "**/.DS_Store"
+        ]
+      }
+    }
+  ],
+  "output": {
+    "directory": "./docs-server",
+    "template": "typescript-standard",
+    "features": ["search", "browse", "retrieve"]
+  }
+}
