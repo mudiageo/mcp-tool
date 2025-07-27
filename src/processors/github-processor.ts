@@ -1,6 +1,5 @@
 import { GitHubSourceConfig, ProcessedContent, ContentItem } from '../types';
 import { Logger } from '../utils/logger';
-import axios from 'axios';
 import { simpleGit } from 'simple-git';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';

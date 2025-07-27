@@ -129,12 +129,18 @@ export class InMemoryMcpServer {
       throw new McpError(ErrorCode.InvalidParams, 'Query is required and must be a string');
     }
 
-    let items = this.content.items;
+    // Create a filtered search engine if source is specified
+    let searchEngine = this.searchEngine;
     if (source) {
-      items = items.filter((item) => item.source === source);
+      const filteredItems = this.content.items.filter((item) => item.source === source);
+      searchEngine = new Fuse(filteredItems, {
+        keys: ['title', 'content', 'metadata.description', 'metadata.tags'],
+        threshold: 0.6,
+        includeScore: true,
+      });
     }
 
-    const searchResults = this.searchEngine.search(query, { limit });
+    const searchResults = searchEngine.search(query, { limit });
     const results = searchResults.map((result) => ({
       id: result.item.id,
       title: result.item.title,

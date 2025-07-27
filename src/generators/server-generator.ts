@@ -59,7 +59,7 @@ export class ServerGenerator {
     await this.generateTypes(outputDir);
   }
 
-  private async generateMainServer(outputDir: string, content: ProcessedContent): Promise<void> {
+  private async generateMainServer(outputDir: string, _content: ProcessedContent): Promise<void> {
     const serverName = this.getServerName();
     const serverCode = `#!/usr/bin/env node
 
@@ -302,7 +302,7 @@ export async function searchContent(args: SearchArgs, contentData: any) {
     content: [
       {
         type: 'text',
-        text: \`Found \${results.length} results for "\${query}\":\\n\\n\` + resultsText,
+        text: \`Found \${results.length} results for "\${query}":\\n\\n\` + resultsText,
       },
     ],
   };
