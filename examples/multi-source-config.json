@@ -1,0 +1,50 @@
+{
+  "sources": [
+    {
+      "type": "website",
+      "name": "vitepress-docs",
+      "url": "https://vitepress.dev/",
+      "options": {
+        "maxDepth": 4,
+        "includeCode": true,
+        "selectors": {
+          "content": ".VPContent",
+          "title": "h1, .title"
+        }
+      }
+    },
+    {
+      "type": "github",
+      "name": "vitepress-repo",
+      "repo": "vuejs/vitepress",
+      "options": {
+        "includeReadme": true,
+        "includeWiki": false,
+        "branch": "main",
+        "exclude": [
+          "node_modules/**",
+          "dist/**",
+          "**/*.test.*"
+        ]
+      }
+    },
+    {
+      "type": "local",
+      "name": "local-notes",
+      "path": "./notes",
+      "options": {
+        "format": "markdown",
+        "recursive": true
+      }
+    }
+  ],
+  "output": {
+    "directory": "./multi-source-server",
+    "template": "typescript-standard",
+    "features": ["search", "browse", "retrieve"]
+  },
+  "processing": {
+    "maxConcurrency": 3,
+    "timeout": 45000
+  }
+}

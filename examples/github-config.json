@@ -1,0 +1,27 @@
+{
+  "sources": [
+    {
+      "type": "github",
+      "name": "react-docs",
+      "repo": "facebook/react",
+      "options": {
+        "includeReadme": true,
+        "includeWiki": false,
+        "includeIssues": false,
+        "branch": "main",
+        "exclude": [
+          "node_modules/**",
+          "build/**",
+          "coverage/**",
+          "**/*.test.js",
+          "**/*.spec.js"
+        ]
+      }
+    }
+  ],
+  "output": {
+    "directory": "./react-server",
+    "template": "typescript-standard",
+    "features": ["search", "browse", "retrieve"]
+  }
+}

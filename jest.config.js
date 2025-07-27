@@ -14,4 +14,13 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
+  moduleNameMapper: {
+    '^chalk$': '<rootDir>/node_modules/chalk/source/index.js',
+  },
+  extensionsToTreatAsEsm: ['.ts'],
+  globals: {
+    'ts-jest': {
+      useESM: true,
+    },
+  },
 };

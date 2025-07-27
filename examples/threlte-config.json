@@ -1,0 +1,31 @@
+{
+  "sources": [
+    {
+      "type": "website",
+      "name": "threlte-docs",
+      "url": "https://threlte.xyz/docs",
+      "options": {
+        "maxDepth": 5,
+        "includeCode": true,
+        "selectors": {
+          "content": ".content",
+          "navigation": ".nav",
+          "title": "h1"
+        },
+        "exclude": [
+          "**/node_modules/**",
+          "**/*.pdf"
+        ]
+      }
+    }
+  ],
+  "output": {
+    "directory": "./threlte-server",
+    "template": "typescript-standard",
+    "features": ["search", "browse", "retrieve"]
+  },
+  "processing": {
+    "maxConcurrency": 5,
+    "timeout": 30000
+  }
+}

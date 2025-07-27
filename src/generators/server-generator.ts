@@ -501,7 +501,11 @@ export async function listResources(args: ListResourcesArgs, contentData: any) {
 
   private async generateUtils(outputDir: string): Promise<void> {
     const dataLoaderCode = `import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export async function loadContentData() {
   try {
@@ -589,7 +593,7 @@ export interface ContentData {
       main: 'dist/index.js',
       type: 'module',
       scripts: {
-        build: 'tsc',
+        build: 'tsc && cp -r src/data dist/',
         start: 'node dist/index.js',
         dev: 'ts-node --esm src/index.ts',
       },
