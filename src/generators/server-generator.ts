@@ -259,9 +259,8 @@ class DocumentationServer {
       if (req.method === 'GET' && req.url === '/sse') {
         // Start SSE connection
         const transport = new SSEServerTransport('/message', res);
-        this.server.connect(transport);
-        transport.start();
-      } else if (req.method === 'POST' && req.url === '/message') {
+        this.server.connect(transport); // This calls start() automatically
+      } else if (req.method === 'POST' && req.url?.startsWith('/message')) {
         // Handle POST messages for existing SSE connections
         const transport = new SSEServerTransport('/message', res);
         transport.handlePostMessage(req, res);

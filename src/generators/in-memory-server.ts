@@ -299,12 +299,9 @@ export class InMemoryMcpServer {
       if (req.method === 'GET' && req.url === '/sse') {
         // Start SSE connection
         const transport = new SSEServerTransport('/message', res);
-        this.server.connect(transport);
-        transport.start();
-      } else if (req.method === 'POST' && req.url === '/message') {
+        this.server.connect(transport); // This calls start() automatically
+      } else if (req.method === 'POST' && req.url?.startsWith('/message')) {
         // Handle POST messages for existing SSE connections
-        // This would need to be routed to the correct transport instance
-        // For simplicity, we'll create a new transport for each connection
         const transport = new SSEServerTransport('/message', res);
         transport.handlePostMessage(req, res);
       } else {
