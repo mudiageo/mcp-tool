@@ -31,7 +31,9 @@ program
   .option('--format <type>', 'Output format preferences')
   .option('--verbose', 'Verbose logging', false)
   .option('--dry-run', 'Preview without generation', false)
-  .option('--run', 'Create and run the server directly without generating files', false);
+  .option('--run', 'Create and run the server directly without generating files', false)
+  .option('--transport <type>', 'Transport type: stdio or http (default: http)', 'http')
+  .option('--port <number>', 'Port for HTTP transport (default: 3000)', (value) => parseInt(value, 10), 3000);
 
 program.action(async (options: CLIOptions) => {
   const logger = new Logger(options.verbose);
@@ -87,7 +89,20 @@ async function loadConfig(configPath: string, logger: Logger): Promise<Config> {
   try {
     logger.info(`📁 Loading configuration from ${configPath}`);
     const configData = readFileSync(configPath, 'utf8');
-    return JSON.parse(configData);
+    const config = JSON.parse(configData);
+    
+    // Ensure server configuration has defaults
+    if (!config.server) {
+      config.server = {};
+    }
+    if (!config.server.transport) {
+      config.server.transport = 'http';
+    }
+    if (!config.server.port) {
+      config.server.port = 3000;
+    }
+    
+    return config;
   } catch (error) {
     throw new Error(`Failed to load configuration: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
@@ -153,6 +168,10 @@ async function createConfigFromOptions(options: CLIOptions, logger: Logger): Pro
       directory: options.output || '/tmp/mcp-server-temp',
       template: options.template || 'typescript-standard',
       features: ['search', 'browse', 'retrieve'],
+    },
+    server: {
+      transport: options.transport || 'http',
+      port: options.port !== undefined ? options.port : 3000,
     },
   };
 }

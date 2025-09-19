@@ -116,7 +116,7 @@ export class McpGenerator {
       ? `${this.config.sources[0].name}-server`
       : 'multi-source-server';
     
-    const server = new InMemoryMcpServer(serverName, processedContent, this.logger);
+    const server = new InMemoryMcpServer(serverName, processedContent, this.logger, this.config);
     await server.run();
   }
 

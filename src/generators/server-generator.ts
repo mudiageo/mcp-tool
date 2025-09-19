@@ -61,16 +61,21 @@ export class ServerGenerator {
 
   private async generateMainServer(outputDir: string, content: ProcessedContent): Promise<void> {
     const serverName = this.getServerName();
+    const transport = this.config.server?.transport || 'http';
+    const port = this.config.server?.port || 3000;
+    
     const serverCode = `#!/usr/bin/env node
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
+import * as http from 'http';
 
 import { searchContent } from './tools/search.js';
 import { getContent } from './tools/content.js';
@@ -80,6 +85,7 @@ import { loadContentData } from './utils/data-loader.js';
 class DocumentationServer {
   private server: Server;
   private contentData: any;
+  private httpServer?: http.Server;
 
   constructor() {
     this.server = new Server({
@@ -210,6 +216,9 @@ class DocumentationServer {
 
     process.on('SIGINT', async () => {
       await this.server.close();
+      if (this.httpServer) {
+        this.httpServer.close();
+      }
       process.exit(0);
     });
   }
@@ -218,10 +227,51 @@ class DocumentationServer {
     // Load content data
     this.contentData = await loadContentData();
     
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
+    const transport = '${transport}';
+    const port = ${port};
     
-    console.error('${serverName} MCP Server running on stdio');
+    if (transport === 'http') {
+      console.error('${serverName} MCP Server starting on HTTP transport (port ' + port + ')');
+      console.error('Available at: http://localhost:' + port + '/sse');
+      
+      await this.startHttpServer(port);
+    } else {
+      console.error('${serverName} MCP Server starting on stdio transport');
+      
+      const stdioTransport = new StdioServerTransport();
+      await this.server.connect(stdioTransport);
+    }
+  }
+
+  private async startHttpServer(port: number): Promise<void> {
+    this.httpServer = http.createServer((req, res) => {
+      // Enable CORS
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+      if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+      }
+
+      if (req.method === 'GET' && req.url === '/sse') {
+        // Start SSE connection
+        const transport = new SSEServerTransport('/message', res);
+        this.server.connect(transport);
+        transport.start();
+      } else if (req.method === 'POST' && req.url === '/message') {
+        // Handle POST messages for existing SSE connections
+        const transport = new SSEServerTransport('/message', res);
+        transport.handlePostMessage(req, res);
+      } else {
+        res.writeHead(404);
+        res.end('Not found');
+      }
+    });
+
+    this.httpServer.listen(port);
   }
 }
 
@@ -643,12 +693,21 @@ export interface ContentData {
     );
 
     // Generate MCP config
+    const transport = this.config.server?.transport || 'http';
+    const port = this.config.server?.port || 3000;
+    
     const mcpConfig = {
       mcpServers: {
-        [this.getServerName().toLowerCase().replace(/\s+/g, '-')]: {
+        [this.getServerName().toLowerCase().replace(/\s+/g, '-')]: transport === 'stdio' ? {
           command: 'node',
           args: ['dist/index.js'],
           env: {},
+        } : {
+          command: 'node',
+          args: ['dist/index.js'],
+          env: {},
+          transport: 'http',
+          url: `http://localhost:${port}/sse`,
         },
       },
     };
@@ -661,10 +720,15 @@ export interface ContentData {
     // Generate README
     const serverName = this.getServerName();
     const serverSlug = serverName.toLowerCase().replace(/\s+/g, '-');
+    
     const readmeLines = [
       '# ' + serverName + ' MCP Server',
       '',
       'Generated MCP server for documentation access.',
+      '',
+      `## Transport Mode: ${transport.toUpperCase()}`,
+      '',
+      transport === 'http' ? `This server runs on HTTP transport at \`http://localhost:${port}/sse\`.` : 'This server runs on stdio transport.',
       '',
       '## Installation',
       '',
@@ -692,9 +756,13 @@ export interface ContentData {
       '```json',
       '{',
       '  "mcpServers": {',
-      '    "' + serverSlug + '": {',
+      '    "' + serverSlug + '": ' + (transport === 'stdio' ? '{' : '{'),
       '      "command": "node",',
-      '      "args": ["path/to/this/server/dist/index.js"]',
+      '      "args": ["path/to/this/server/dist/index.js"]' + (transport === 'stdio' ? '' : ','),
+      ...(transport === 'http' ? [
+        '      "transport": "http",',
+        `      "url": "http://localhost:${port}/sse"`
+      ] : []),
       '    }',
       '  }',
       '}',
