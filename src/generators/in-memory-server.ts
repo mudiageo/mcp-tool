@@ -7,7 +7,7 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
-import { ProcessedContent, ContentItem, Config } from '../types';
+import type { ProcessedContent, ContentItem, Config } from '../types';
 import { Logger } from '../utils/logger';
 import Fuse from 'fuse.js';
 import * as http from 'http';
@@ -263,10 +263,8 @@ export class InMemoryMcpServer {
     }
 
     if (transport === 'http') {
-      if (transport !== 'stdio') {
-        this.logger.info(`🔌 Server listening on HTTP transport (port ${port})`);
-        this.logger.info(`📍 Available at: http://localhost:${port}/sse`);
-      }
+      this.logger.info(`🔌 Server listening on HTTP transport (port ${port})`);
+      this.logger.info(`📍 Available at: http://localhost:${port}/sse`);
       
       await this.startHttpServer(port);
     } else {
