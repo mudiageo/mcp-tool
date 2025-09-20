@@ -19,7 +19,7 @@ describe('Transport Configuration', () => {
     }
   });
 
-  test('should default to HTTP transport when server config is not provided', async () => {
+  test('should default to stdio transport when server config is not provided', async () => {
     // Create test documentation
     const docsDir = join(testDir, 'docs');
     await fs.ensureDir(docsDir);
@@ -40,17 +40,16 @@ describe('Transport Configuration', () => {
         template: 'typescript-standard',
         features: ['search', 'browse', 'retrieve'],
       },
-      // No server config - should default to HTTP
+      // No server config - should default to stdio
     };
 
     const generator = new McpGenerator(config, logger);
     await generator.generate();
 
-    // Verify server was generated with HTTP transport
+    // Verify server was generated with stdio transport
     const serverCode = await fs.readFile(join(testDir, 'output/src/index.ts'), 'utf8');
-    expect(serverCode).toContain("const transport = 'http'");
-    expect(serverCode).toContain("const port = 3000");
-    expect(serverCode).toContain('SSEServerTransport');
+    expect(serverCode).toContain("const transport = 'stdio'");
+    expect(serverCode).toContain('StdioServerTransport');
   });
 
   test('should use stdio transport when explicitly configured', async () => {

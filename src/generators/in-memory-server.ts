@@ -252,30 +252,38 @@ export class InMemoryMcpServer {
   }
 
   async run(): Promise<void> {
-    this.logger.info('🚀 Starting MCP server...');
-    this.logger.info(`📊 Loaded ${this.content.items.length} documentation items`);
-    this.logger.info('💡 Available tools: search_content, get_content, list_resources');
-
-    const transport = this.config?.server?.transport || 'http';
+    const transport = this.config?.server?.transport || 'stdio';
     const port = this.config?.server?.port || 3000;
 
+    // Only log when not using stdio transport to avoid corrupting JSON-RPC messages
+    if (transport !== 'stdio') {
+      this.logger.info('🚀 Starting MCP server...');
+      this.logger.info(`📊 Loaded ${this.content.items.length} documentation items`);
+      this.logger.info('💡 Available tools: search_content, get_content, list_resources');
+    }
+
     if (transport === 'http') {
-      this.logger.info(`🔌 Server listening on HTTP transport (port ${port})`);
-      this.logger.info(`📍 Available at: http://localhost:${port}/sse`);
+      if (transport !== 'stdio') {
+        this.logger.info(`🔌 Server listening on HTTP transport (port ${port})`);
+        this.logger.info(`📍 Available at: http://localhost:${port}/sse`);
+      }
       
       await this.startHttpServer(port);
     } else {
-      this.logger.info('🔌 Server listening on stdio transport');
-      
+      // For stdio transport, no logging to avoid corrupting JSON-RPC
       const stdioTransport = new StdioServerTransport();
       await this.server.connect(stdioTransport);
     }
 
-    this.logger.info('⏹️  Press Ctrl+C to stop the server\n');
+    if (transport !== 'stdio') {
+      this.logger.info('⏹️  Press Ctrl+C to stop the server\n');
+    }
 
     // Keep the process running
     process.on('SIGINT', () => {
-      this.logger.info('\n🛑 Stopping MCP server...');
+      if (transport !== 'stdio') {
+        this.logger.info('\n🛑 Stopping MCP server...');
+      }
       if (this.httpServer) {
         this.httpServer.close();
       }

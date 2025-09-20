@@ -61,7 +61,7 @@ export class ServerGenerator {
 
   private async generateMainServer(outputDir: string, content: ProcessedContent): Promise<void> {
     const serverName = this.getServerName();
-    const transport = this.config.server?.transport || 'http';
+    const transport = this.config.server?.transport || 'stdio';
     const port = this.config.server?.port || 3000;
     
     const serverCode = `#!/usr/bin/env node
@@ -211,7 +211,10 @@ class DocumentationServer {
 
   private setupErrorHandling(): void {
     this.server.onerror = (error) => {
-      console.error('[MCP Error]', error);
+      // Only log errors for HTTP transport to avoid corrupting stdio JSON-RPC
+      if ('${transport}' === 'http') {
+        console.error('[MCP Error]', error);
+      }
     };
 
     process.on('SIGINT', async () => {
@@ -236,8 +239,7 @@ class DocumentationServer {
       
       await this.startHttpServer(port);
     } else {
-      console.error('${serverName} MCP Server starting on stdio transport');
-      
+      // For stdio transport, no console output to avoid corrupting JSON-RPC messages
       const stdioTransport = new StdioServerTransport();
       await this.server.connect(stdioTransport);
     }
@@ -276,7 +278,10 @@ class DocumentationServer {
 
 const server = new DocumentationServer();
 server.start().catch((error) => {
-  console.error('Failed to start server:', error);
+  // Only log startup errors for HTTP transport to avoid corrupting stdio JSON-RPC
+  if ('${transport}' === 'http') {
+    console.error('Failed to start server:', error);
+  }
   process.exit(1);
 });
 `;

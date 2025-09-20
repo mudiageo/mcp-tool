@@ -45,11 +45,11 @@ mcp-generate --source github --repo facebook/react --output ./react-server --inc
 
 ### Run Server Directly (No File Generation)
 ```bash
-# Run an MCP server directly from local docs (HTTP transport by default)
+# Run an MCP server directly from local docs (stdio transport by default)
 mcp-generate --source local --path ./docs --run
 
-# Run server from website documentation with stdio transport
-mcp-generate --source website --url https://threlte.xyz/docs --run --transport stdio
+# Run server from website documentation with HTTP transport
+mcp-generate --source website --url https://threlte.xyz/docs --run --transport http
 
 # Run server with custom HTTP port
 mcp-generate --source local --path ./docs --run --transport http --port 4000
@@ -59,10 +59,10 @@ mcp-generate --source local --path ./docs --run --transport http --port 4000
 
 The tool supports two transport modes for MCP servers:
 
-- **HTTP Transport** (default): Uses Server-Sent Events (SSE) for communication
-- **Stdio Transport**: Uses stdin/stdout for communication
+- **Stdio Transport** (default): Uses stdin/stdout for communication - ideal for production MCP deployments
+- **HTTP Transport**: Uses Server-Sent Events (SSE) for communication - better for debugging and development
 
-HTTP transport is recommended for most use cases as it provides better debugging capabilities and can be easily tested with web tools.
+Stdio transport is the default as it's the standard for MCP servers. Use HTTP transport for development and debugging when you need to inspect the communication.
 
 ### Use Configuration File
 ```bash
@@ -89,7 +89,7 @@ Options:
   --verbose                Verbose logging
   --dry-run               Preview without generation
   --run                   Create and run the server directly without generating files
-  --transport <type>       Transport type: stdio or http (default: http)
+  --transport <type>       Transport type: stdio or http (default: stdio)
   --port <number>          Port for HTTP transport (default: 3000)
   -h, --help              Display help for command
 ```
@@ -121,8 +121,7 @@ Options:
     "features": ["search", "browse", "retrieve"]
   },
   "server": {
-    "transport": "http",
-    "port": 3000
+    "transport": "stdio"
   },
   "processing": {
     "maxConcurrency": 5,
@@ -135,8 +134,8 @@ Options:
 
 #### Server Configuration
 - **transport**: Transport protocol for the MCP server
-  - `"http"` (default): Uses Server-Sent Events for communication. Recommended for development and debugging.
-  - `"stdio"`: Uses stdin/stdout for communication. Suitable for production deployments.
+  - `"stdio"` (default): Uses stdin/stdout for communication. Standard for production MCP deployments.
+  - `"http"`: Uses Server-Sent Events for communication. Recommended for development and debugging.
 - **port**: Port number for HTTP transport (default: 3000). Only used when transport is "http".
 
 #### Source Types
