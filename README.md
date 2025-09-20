@@ -45,12 +45,24 @@ mcp-generate --source github --repo facebook/react --output ./react-server --inc
 
 ### Run Server Directly (No File Generation)
 ```bash
-# Run an MCP server directly from local docs
+# Run an MCP server directly from local docs (stdio transport by default)
 mcp-generate --source local --path ./docs --run
 
-# Run server from website documentation
-mcp-generate --source website --url https://threlte.xyz/docs --run
+# Run server from website documentation with HTTP transport
+mcp-generate --source website --url https://threlte.xyz/docs --run --transport http
+
+# Run server with custom HTTP port
+mcp-generate --source local --path ./docs --run --transport http --port 4000
 ```
+
+### Transport Options
+
+The tool supports two transport modes for MCP servers:
+
+- **Stdio Transport** (default): Uses stdin/stdout for communication - ideal for production MCP deployments
+- **HTTP Transport**: Uses Server-Sent Events (SSE) for communication - better for debugging and development
+
+Stdio transport is the default as it's the standard for MCP servers. Use HTTP transport for development and debugging when you need to inspect the communication.
 
 ### Use Configuration File
 ```bash
@@ -77,6 +89,8 @@ Options:
   --verbose                Verbose logging
   --dry-run               Preview without generation
   --run                   Create and run the server directly without generating files
+  --transport <type>       Transport type: stdio or http (default: stdio)
+  --port <number>          Port for HTTP transport (default: 3000)
   -h, --help              Display help for command
 ```
 
@@ -106,12 +120,26 @@ Options:
     "template": "typescript-standard",
     "features": ["search", "browse", "retrieve"]
   },
+  "server": {
+    "transport": "stdio"
+  },
   "processing": {
     "maxConcurrency": 5,
     "timeout": 30000
   }
 }
 ```
+
+### Configuration Options
+
+#### Server Configuration
+- **transport**: Transport protocol for the MCP server
+  - `"stdio"` (default): Uses stdin/stdout for communication. Standard for production MCP deployments.
+  - `"http"`: Uses Server-Sent Events for communication. Recommended for development and debugging.
+- **port**: Port number for HTTP transport (default: 3000). Only used when transport is "http".
+
+#### Source Types
+See the `examples/` directory for complete configuration examples for each source type.
 
 ## Generated MCP Server
 

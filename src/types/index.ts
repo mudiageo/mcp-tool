@@ -54,6 +54,10 @@ export interface Config {
     maxConcurrency?: number;
     timeout?: number;
   };
+  server?: {
+    transport?: 'stdio' | 'http';
+    port?: number;
+  };
 }
 
 export interface ContentItem {
@@ -108,4 +112,6 @@ export interface CLIOptions {
   verbose?: boolean;
   dryRun?: boolean;
   run?: boolean;
+  transport?: 'stdio' | 'http';
+  port?: number;
 }

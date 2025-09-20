@@ -1,24 +1,28 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
-import { ProcessedContent, ContentItem } from '../types';
+import type { ProcessedContent, ContentItem, Config } from '../types';
 import { Logger } from '../utils/logger';
 import Fuse from 'fuse.js';
+import * as http from 'http';
 
 export class InMemoryMcpServer {
   private server: Server;
   private content: ProcessedContent;
   private searchEngine: Fuse<ContentItem>;
+  private httpServer?: http.Server;
 
   constructor(
     private name: string,
     content: ProcessedContent,
-    private logger: Logger
+    private logger: Logger,
+    private config?: Config
   ) {
     this.content = content;
     this.server = new Server(
@@ -248,19 +252,70 @@ export class InMemoryMcpServer {
   }
 
   async run(): Promise<void> {
-    this.logger.info('🚀 Starting MCP server...');
-    this.logger.info(`📊 Loaded ${this.content.items.length} documentation items`);
-    this.logger.info('💡 Available tools: search_content, get_content, list_resources');
-    this.logger.info('🔌 Server listening on stdio transport');
-    this.logger.info('⏹️  Press Ctrl+C to stop the server\n');
+    const transport = this.config?.server?.transport || 'stdio';
+    const port = this.config?.server?.port || 3000;
 
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
+    // Only log when not using stdio transport to avoid corrupting JSON-RPC messages
+    if (transport !== 'stdio') {
+      this.logger.info('🚀 Starting MCP server...');
+      this.logger.info(`📊 Loaded ${this.content.items.length} documentation items`);
+      this.logger.info('💡 Available tools: search_content, get_content, list_resources');
+    }
+
+    if (transport === 'http') {
+      this.logger.info(`🔌 Server listening on HTTP transport (port ${port})`);
+      this.logger.info(`📍 Available at: http://localhost:${port}/sse`);
+      
+      await this.startHttpServer(port);
+    } else {
+      // For stdio transport, no logging to avoid corrupting JSON-RPC
+      const stdioTransport = new StdioServerTransport();
+      await this.server.connect(stdioTransport);
+    }
+
+    if (transport !== 'stdio') {
+      this.logger.info('⏹️  Press Ctrl+C to stop the server\n');
+    }
 
     // Keep the process running
     process.on('SIGINT', () => {
-      this.logger.info('\n🛑 Stopping MCP server...');
+      if (transport !== 'stdio') {
+        this.logger.info('\n🛑 Stopping MCP server...');
+      }
+      if (this.httpServer) {
+        this.httpServer.close();
+      }
       process.exit(0);
     });
+  }
+
+  private async startHttpServer(port: number): Promise<void> {
+    this.httpServer = http.createServer((req, res) => {
+      // Enable CORS
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+      if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+      }
+
+      if (req.method === 'GET' && req.url === '/sse') {
+        // Start SSE connection
+        const transport = new SSEServerTransport('/message', res);
+        this.server.connect(transport); // This calls start() automatically
+      } else if (req.method === 'POST' && req.url?.startsWith('/message')) {
+        // Handle POST messages for existing SSE connections
+        const transport = new SSEServerTransport('/message', res);
+        transport.handlePostMessage(req, res);
+      } else {
+        res.writeHead(404);
+        res.end('Not found');
+      }
+    });
+
+    this.httpServer.listen(port);
   }
 }
